@@ -22,7 +22,7 @@ TARGET_URL = "https://peneraju.org/candidate-verification"
 
 STATUS_NORMALIZATION = {
     "NO APPLICATION FOUND": "No application found", # 比如可以改成 "candidates does not found"
-    "CANDIDATE DOES NOT EXIST": "Candidates do not exist ", # 比如可以改成 "candidate not found"
+    "CANDIDATE DOES NOT EXIST": "Candidates does not exist ", # 比如可以改成 "candidate not found"
     "REJECTED": "Rejected",
     "APPROVED": "Approved",
     "SUCCESS": "Approved",
