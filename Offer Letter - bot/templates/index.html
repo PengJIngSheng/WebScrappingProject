@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offer Letter Bot</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- Animated background layers -->
+    <div class="bg-noise"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+
+    <div class="app">
+        <!-- ===== Header ===== -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo-wrap">
+                    <div class="logo">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="header-text">
+                    <h1>Offer Letter Bot</h1>
+                    <div class="pipeline-flow">
+                        <span class="pipe-step">Airtable</span>
+                        <span class="pipe-arrow">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M6 3l5 5-5 5V3z" />
+                            </svg>
+                        </span>
+                        <span class="pipe-step">Google Docs</span>
+                        <span class="pipe-arrow">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M6 3l5 5-5 5V3z" />
+                            </svg>
+                        </span>
+                        <span class="pipe-step">PDF</span>
+                        <span class="pipe-arrow">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M6 3l5 5-5 5V3z" />
+                            </svg>
+                        </span>
+                        <span class="pipe-step">Airtable</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="status-badge" id="statusBadge">
+                    <span class="status-dot"></span>
+                    <span id="statusText">Stopped</span>
+                </span>
+            </div>
+        </header>
+
+        <!-- ===== Main Grid ===== -->
+        <main class="main">
+            <!-- Left Column -->
+            <div class="left-col">
+                <!-- Airtable Config -->
+                <section class="card" data-tilt>
+                    <div class="card-glow"></div>
+                    <div class="card-header">
+                        <div class="card-icon card-icon-amber">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7" />
+                                <rect x="14" y="3" width="7" height="7" />
+                                <rect x="3" y="14" width="7" height="7" />
+                                <rect x="14" y="14" width="7" height="7" />
+                            </svg>
+                        </div>
+                        <h2>Airtable Configuration</h2>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="airtable_api_token">API Token</label>
+                            <div class="input-wrap">
+                                <input type="password" id="airtable_api_token" placeholder="pat...">
+                                <span class="input-icon">🔑</span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="base_id">Base ID</label>
+                                <input type="text" id="base_id" placeholder="appXXXXXX">
+                            </div>
+                            <div class="form-group">
+                                <label for="table_name">Table Name</label>
+                                <input type="text" id="table_name" placeholder="e.g. Student">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="view_name">View Name</label>
+                                <input type="text" id="view_name" placeholder="e.g. SRecord1">
+                            </div>
+                            <div class="form-group">
+                                <label for="attachment_field_name">Attachment Field</label>
+                                <input type="text" id="attachment_field_name" placeholder="e.g. Offer">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Google Config -->
+                <section class="card" data-tilt>
+                    <div class="card-glow"></div>
+                    <div class="card-header">
+                        <div class="card-icon card-icon-blue">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                                <polyline points="13 2 13 9 20 9" />
+                            </svg>
+                        </div>
+                        <h2>Google Configuration</h2>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="template_doc_id">Template Doc ID</label>
+                            <input type="text" id="template_doc_id" placeholder="Google Docs template ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="target_folder_id">Target Folder ID</label>
+                            <input type="text" id="target_folder_id" placeholder="Google Drive folder ID">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Credentials -->
+                <section class="card" data-tilt>
+                    <div class="card-glow"></div>
+                    <div class="card-header">
+                        <div class="card-icon card-icon-green">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                        </div>
+                        <h2>Google Credentials</h2>
+                    </div>
+                    <div class="credentials-info" id="credentialsInfo">
+                        <span class="cred-status">Checking...</span>
+                    </div>
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="credentialsFile" accept=".json" hidden>
+                        <div class="upload-content">
+                            <div class="upload-icon-wrap">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="17 8 12 3 7 8" />
+                                    <line x1="12" y1="3" x2="12" y2="15" />
+                                </svg>
+                            </div>
+                            <p>Drag & drop <strong>credentials.json</strong></p>
+                            <span class="upload-hint">or click to browse · Expires after 3 days</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Interval + Save -->
+                <section class="card" data-tilt>
+                    <div class="card-glow"></div>
+                    <div class="card-header">
+                        <div class="card-icon card-icon-purple">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                        </div>
+                        <h2>Polling Interval</h2>
+                    </div>
+                    <div class="interval-row">
+                        <span>Check every</span>
+                        <input type="number" id="interval_minutes" min="1" max="1440" value="5" class="interval-input">
+                        <span>minutes</span>
+                    </div>
+                </section>
+
+                <button class="btn btn-save" id="saveBtn" onclick="saveConfig()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                    </svg>
+                    Save Configuration
+                </button>
+            </div>
+
+            <!-- Right Column -->
+            <div class="right-col">
+                <!-- Controls -->
+                <section class="card controls-card" data-tilt>
+                    <div class="card-glow"></div>
+                    <div class="card-header">
+                        <div class="card-icon card-icon-indigo">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                        </div>
+                        <h2>Controls</h2>
+                    </div>
+                    <div class="controls-row">
+                        <button class="btn btn-start" id="startBtn" onclick="startScheduler()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                            Start
+                        </button>
+                        <button class="btn btn-stop" id="stopBtn" onclick="stopScheduler()" disabled>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="6" y="4" width="4" height="16" />
+                                <rect x="14" y="4" width="4" height="16" />
+                            </svg>
+                            Stop
+                        </button>
+                        <button class="btn btn-run" id="runNowBtn" onclick="runNow()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                            </svg>
+                            Run Now
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Stats -->
+                <section class="card" data-tilt>
+                    <div class="card-glow"></div>
+                    <div class="card-header">
+                        <div class="card-icon card-icon-cyan">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M18 20V10" />
+                                <path d="M12 20V4" />
+                                <path d="M6 20v-6" />
+                            </svg>
+                        </div>
+                        <h2>Statistics</h2>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item stat-time">
+                            <div class="stat-value" id="statLastRun">—</div>
+                            <div class="stat-label">Last Run</div>
+                        </div>
+                        <div class="stat-item stat-processed">
+                            <div class="stat-ring" style="--progress: 0; --ring-color: #34d399;">
+                                <div class="stat-value" id="statProcessed">0</div>
+                            </div>
+                            <div class="stat-label">Processed</div>
+                        </div>
+                        <div class="stat-item stat-skipped">
+                            <div class="stat-ring" style="--progress: 0; --ring-color: #fbbf24;">
+                                <div class="stat-value" id="statSkipped">0</div>
+                            </div>
+                            <div class="stat-label">Skipped</div>
+                        </div>
+                        <div class="stat-item stat-errors">
+                            <div class="stat-ring" style="--progress: 0; --ring-color: #f87171;">
+                                <div class="stat-value" id="statErrors">0</div>
+                            </div>
+                            <div class="stat-label">Errors</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Logs -->
+                <section class="card logs-card">
+                    <div class="card-glow"></div>
+                    <div class="logs-header">
+                        <div class="card-header" style="margin-bottom:0;">
+                            <div class="card-icon card-icon-slate">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="4 17 10 11 4 5" />
+                                    <line x1="12" y1="19" x2="20" y2="19" />
+                                </svg>
+                            </div>
+                            <h2>Live Terminal</h2>
+                        </div>
+                        <button class="btn btn-small" onclick="refreshLogs()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="23 4 23 10 17 10" />
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="logs-container" id="logsContainer">
+                        <pre id="logsContent">Awaiting logs...</pre>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <span>Built with ❤️ · Offer Letter Bot v2.0</span>
+        </footer>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ================= API Helpers =================
+
+        async function api(url, method = 'GET', body = null) {
+            const opts = { method, headers: {} };
+            if (body && !(body instanceof FormData)) {
+                opts.headers['Content-Type'] = 'application/json';
+                opts.body = JSON.stringify(body);
+            } else if (body) {
+                opts.body = body;
+            }
+            const res = await fetch(url, opts);
+            return res.json();
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `toast toast-${type} toast-show`;
+            setTimeout(() => toast.className = 'toast', 3500);
+        }
+
+        // ================= Config =================
+
+        async function loadConfig() {
+            const data = await api('/api/config');
+            const fields = ['base_id', 'table_name', 'view_name', 'attachment_field_name',
+                'template_doc_id', 'target_folder_id'];
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                if (el && data[f]) el.value = data[f];
+            });
+            if (data.airtable_api_token) {
+                document.getElementById('airtable_api_token').value = data.airtable_api_token;
+            }
+            if (data.interval_minutes) {
+                document.getElementById('interval_minutes').value = data.interval_minutes;
+            }
+        }
+
+        async function saveConfig() {
+            const fields = ['airtable_api_token', 'base_id', 'table_name', 'view_name',
+                'attachment_field_name', 'template_doc_id', 'target_folder_id', 'interval_minutes'];
+            const body = {};
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                if (el) body[f] = el.value;
+            });
+
+            const btn = document.getElementById('saveBtn');
+            btn.classList.add('btn-loading');
+            const res = await api('/api/config', 'POST', body);
+            btn.classList.remove('btn-loading');
+
+            if (res.success) {
+                showToast('✓ Configuration saved successfully');
+            } else {
+                showToast(res.error || 'Save failed', 'error');
+            }
+        }
+
+        // ================= Credentials =================
+
+        function setupUploadZone() {
+            const zone = document.getElementById('uploadZone');
+            const input = document.getElementById('credentialsFile');
+
+            zone.addEventListener('click', () => input.click());
+            zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                if (e.dataTransfer.files.length) uploadFile(e.dataTransfer.files[0]);
+            });
+            input.addEventListener('change', () => { if (input.files.length) uploadFile(input.files[0]); });
+        }
+
+        async function uploadFile(file) {
+            const fd = new FormData();
+            fd.append('file', file);
+            const res = await fetch('/api/upload-credentials', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.success) {
+                showToast('✓ credentials.json uploaded · OAuth reset');
+                updateCredentialsInfo(data.info);
+            } else {
+                showToast(data.error || 'Upload failed', 'error');
+            }
+        }
+
+        function updateCredentialsInfo(info) {
+            const el = document.getElementById('credentialsInfo');
+            if (info && info.exists) {
+                el.innerHTML = `
+                    <div class="cred-badge cred-ok">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Active
+                    </div>
+                    <span class="cred-detail">Expires in ${info.expires_in} · Uploaded ${info.uploaded_at}</span>`;
+            } else {
+                el.innerHTML = `
+                    <div class="cred-badge cred-missing">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        Not uploaded
+                    </div>`;
+            }
+        }
+
+        // ================= Controls =================
+
+        async function startScheduler() {
+            const res = await api('/api/start', 'POST');
+            if (res.success) { showToast('▶ 自动检查已开启，将持续监控 Airtable 新数据'); updateUI(true); }
+            else showToast(res.error, 'error');
+        }
+
+        async function stopScheduler() {
+            const res = await api('/api/stop', 'POST');
+            if (res.success) { showToast('⏹ 自动检查已停止'); updateUI(false); }
+            else showToast(res.error, 'error');
+        }
+
+        async function runNow() {
+            const res = await api('/api/run-now', 'POST');
+            if (res.success) showToast('⚡ 手动检查开始执行...');
+            else showToast(res.error, 'error');
+        }
+
+        function updateUI(running) {
+            const badge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+
+            if (running) {
+                statusText.textContent = 'Running';
+                badge.className = 'status-badge status-running';
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            } else {
+                statusText.textContent = 'Stopped';
+                badge.className = 'status-badge status-stopped';
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        }
+
+        // ================= Status =================
+
+        async function refreshStatus() {
+            try {
+                const data = await api('/api/status');
+                updateUI(data.scheduler_running);
+                updateCredentialsInfo(data.credentials);
+                document.getElementById('statLastRun').textContent = data.last_run || '—';
+                if (data.last_stats) {
+                    animateNumber('statProcessed', data.last_stats.processed || 0);
+                    animateNumber('statSkipped', data.last_stats.skipped || 0);
+                    animateNumber('statErrors', data.last_stats.errors || 0);
+                }
+            } catch (e) { }
+        }
+
+        function animateNumber(id, target) {
+            const el = document.getElementById(id);
+            const current = parseInt(el.textContent) || 0;
+            if (current === target) return;
+            el.textContent = target;
+            el.classList.add('stat-pop');
+            setTimeout(() => el.classList.remove('stat-pop'), 400);
+        }
+
+        // ================= Logs =================
+
+        async function refreshLogs() {
+            try {
+                const data = await api('/api/logs?lines=100');
+                const container = document.getElementById('logsContent');
+                if (data.logs && data.logs.length) {
+                    container.innerHTML = data.logs.map(line => {
+                        if (line.includes('[ERROR]')) return `<span class="log-error">${escapeHtml(line)}</span>`;
+                        if (line.includes('[WARNING]')) return `<span class="log-warn">${escapeHtml(line)}</span>`;
+                        if (line.includes('✅') || line.includes('complete')) return `<span class="log-success">${escapeHtml(line)}</span>`;
+                        return escapeHtml(line);
+                    }).join('\n');
+                } else {
+                    container.textContent = 'Awaiting logs...';
+                }
+                const logsDiv = document.getElementById('logsContainer');
+                logsDiv.scrollTop = logsDiv.scrollHeight;
+            } catch (e) { }
+        }
+
+        function escapeHtml(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        // ================= 3D Tilt =================
+
+        function initTilt() {
+            document.querySelectorAll('[data-tilt]').forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = (e.clientX - rect.left) / rect.width - 0.5;
+                    const y = (e.clientY - rect.top) / rect.height - 0.5;
+                    card.style.transform = `perspective(800px) rotateY(${x * 4}deg) rotateX(${-y * 4}deg) translateY(-4px)`;
+                    // Move glow
+                    const glow = card.querySelector('.card-glow');
+                    if (glow) {
+                        glow.style.background = `radial-gradient(circle at ${(x + 0.5) * 100}% ${(y + 0.5) * 100}%, rgba(99, 102, 241, 0.08), transparent 60%)`;
+                    }
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = '';
+                    const glow = card.querySelector('.card-glow');
+                    if (glow) glow.style.background = '';
+                });
+            });
+        }
+
+        // ================= Init =================
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadConfig();
+            setupUploadZone();
+            refreshStatus();
+            refreshLogs();
+            initTilt();
+            setInterval(refreshStatus, 5000);
+            setInterval(refreshLogs, 5000);
+        });
+    </script>
+</body>
+
+</html>

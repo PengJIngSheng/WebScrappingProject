@@ -1,1 +1,4 @@
 Offer\ Letter\ -\ bot/*.json
+.venv.zip
+.venv/
+__pycache__/

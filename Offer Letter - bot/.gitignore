@@ -1,0 +1,12 @@
+# Secrets & Credentials
+.env
+token.json
+credentials.json
+config.json
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log
