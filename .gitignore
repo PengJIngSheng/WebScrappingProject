@@ -1,4 +1,9 @@
-Offer\ Letter\ -\ bot/*.json
+Offer Letter - bot/.env
+Offer Letter - bot/config.json
+Offer Letter - bot/credentials.json
+Offer Letter - bot/credentiails.json
+Offer Letter - bot/token.json
+Offer Letter - bot/*.log
 .venv.zip
 .venv/
 __pycache__/

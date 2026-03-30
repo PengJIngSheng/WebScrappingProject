@@ -4,8 +4,8 @@ echo   Offer Letter Bot - Starting...
 echo ============================================
 echo.
 
-:: Use the project's virtual environment Python directly
-set "VENV_PYTHON=C:\Users\mier3\OneDrive\Desktop\PythonProject\DemoWebScraping\.venv\Scripts\python.exe"
+:: Use the repo-local virtual environment Python directly
+set "VENV_PYTHON=%~dp0..\.venv\Scripts\python.exe"
 
 :: Check if venv Python exists
 if not exist "%VENV_PYTHON%" (

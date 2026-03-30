@@ -451,6 +451,12 @@ body {
     letter-spacing: 0.08em;
 }
 
+.field-hint,
+.section-copy {
+    font-size: 0.72rem;
+    color: var(--text-3);
+}
+
 .input-wrap {
     position: relative;
 }
@@ -561,6 +567,18 @@ input::placeholder {
 .btn-save.btn-loading {
     pointer-events: none;
     opacity: 0.7;
+}
+
+.btn-ghost {
+    width: 100%;
+    margin-top: 14px;
+    background: rgba(99, 102, 241, 0.06);
+    color: var(--accent);
+    border: 1px dashed rgba(99, 102, 241, 0.22);
+}
+
+.btn-ghost:hover {
+    background: rgba(99, 102, 241, 0.1);
 }
 
 /* Start */
@@ -692,6 +710,42 @@ input::placeholder {
 .upload-hint {
     font-size: 0.68rem;
     color: var(--text-3);
+}
+
+/* ================= Field Mapping ================= */
+.mapping-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.mapping-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 44px;
+    gap: 10px;
+    align-items: center;
+}
+
+.mapping-input {
+    min-width: 0;
+}
+
+.mapping-remove {
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(248, 113, 113, 0.16);
+    border-radius: 12px;
+    background: rgba(248, 113, 113, 0.08);
+    color: var(--red);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.3s var(--ease);
+}
+
+.mapping-remove:hover {
+    background: rgba(248, 113, 113, 0.14);
+    transform: translateY(-1px);
 }
 
 /* ================= Interval ================= */
@@ -934,6 +988,10 @@ input::placeholder {
     }
 
     .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .mapping-row {
         grid-template-columns: 1fr;
     }
 }

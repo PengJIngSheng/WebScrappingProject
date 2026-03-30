@@ -1,8 +1,10 @@
 import os
 import time
 import io
+import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
+from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -17,6 +19,7 @@ SCOPES = [
     'https://www.googleapis.com/auth/documents',
     'https://www.googleapis.com/auth/drive'
 ]
+OAUTH_LOCAL_SERVER_PORT = 8080
 
 # Default field mapping
 DEFAULT_FIELD_MAPPING = {
@@ -27,46 +30,24 @@ DEFAULT_FIELD_MAPPING = {
     "{{student status}}": "student status"
 }
 
-CREDENTIALS_MAX_AGE_DAYS = 3
-
 
 # ================= Credentials Expiry =================
 
 def check_credentials_expiry(script_dir):
-    """Delete credentials.json if older than CREDENTIALS_MAX_AGE_DAYS days. Returns True if valid."""
+    """Return True when credentials.json exists."""
     creds_path = os.path.join(script_dir, 'credentials.json')
-    if not os.path.exists(creds_path):
-        return False
-
-    mtime = datetime.fromtimestamp(os.path.getmtime(creds_path))
-    age = datetime.now() - mtime
-    if age > timedelta(days=CREDENTIALS_MAX_AGE_DAYS):
-        os.remove(creds_path)
-        token_path = os.path.join(script_dir, 'token.json')
-        if os.path.exists(token_path):
-            os.remove(token_path)
-        logger.warning(f"credentials.json expired ({age.days} days old). Deleted. Please re-upload.")
-        return False
-
-    return True
+    return os.path.exists(creds_path)
 
 
 def get_credentials_info(script_dir):
     """Return credentials status info."""
     creds_path = os.path.join(script_dir, 'credentials.json')
     if not os.path.exists(creds_path):
-        return {"exists": False, "expires_in": None}
+        return {"exists": False, "uploaded_at": None}
 
     mtime = datetime.fromtimestamp(os.path.getmtime(creds_path))
-    age = datetime.now() - mtime
-    remaining = timedelta(days=CREDENTIALS_MAX_AGE_DAYS) - age
-    if remaining.total_seconds() <= 0:
-        return {"exists": False, "expires_in": None}
-
-    hours_left = remaining.total_seconds() / 3600
     return {
         "exists": True,
-        "expires_in": f"{hours_left:.1f} hours",
         "uploaded_at": mtime.strftime('%Y-%m-%d %H:%M:%S')
     }
 
@@ -76,25 +57,81 @@ def get_credentials_info(script_dir):
 def authenticate_google(script_dir):
     """Handles Google OAuth2.0 authorization."""
     token_path = os.path.join(script_dir, 'token.json')
-    creds_path = os.path.join(script_dir, 'credentials.json')
-
-    if not os.path.exists(creds_path):
-        raise FileNotFoundError("credentials.json not found. Please upload it first.")
+    creds_path = resolve_credentials_path(script_dir)
 
     creds = None
     if os.path.exists(token_path):
-        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+        try:
+            creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+        except Exception as exc:
+            logger.warning(f"Existing token.json is unreadable. Deleting it and re-authorizing. Error: {exc}")
+            os.remove(token_path)
+
+    if creds and creds.expired and creds.refresh_token:
+        try:
+            creds.refresh(Request())
+        except RefreshError as exc:
+            logger.warning(f"Existing token.json could not be refreshed. Re-authorizing with credentials.json. Error: {exc}")
+            os.remove(token_path)
+            creds = None
 
     if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
-            creds = flow.run_local_server(port=0)
+        flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
+        creds = flow.run_local_server(port=OAUTH_LOCAL_SERVER_PORT)
         with open(token_path, 'w') as token:
             token.write(creds.to_json())
 
     return creds
+
+
+def resolve_credentials_path(script_dir):
+    """Return a usable credentials.json path and fail with actionable errors otherwise."""
+    creds_path = os.path.join(script_dir, 'credentials.json')
+    typo_path = os.path.join(script_dir, 'credentiails.json')
+
+    if os.path.exists(creds_path):
+        validate_credentials_file(creds_path)
+        return creds_path
+
+    if os.path.exists(typo_path):
+        raise FileNotFoundError(
+            "Found 'credentiails.json', but the bot expects 'credentials.json'. "
+            "Rename the file or upload it again."
+        )
+
+    raise FileNotFoundError("credentials.json not found. Please upload it first.")
+
+
+def validate_credentials_file(creds_path):
+    """Validate the Google OAuth client secrets file before using it."""
+    try:
+        with open(creds_path, 'r', encoding='utf-8') as f:
+            payload = json.load(f)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{os.path.basename(creds_path)} is not valid JSON: {exc}") from exc
+
+    validate_credentials_payload(payload)
+
+
+def validate_credentials_payload(payload):
+    """Validate Google OAuth credentials payload content."""
+    client_config = payload.get('installed') or payload.get('web')
+    if not isinstance(client_config, dict):
+        raise ValueError("credentials.json must contain a top-level 'installed' or 'web' object.")
+
+    required_keys = ['client_id', 'client_secret', 'auth_uri', 'token_uri']
+    missing_keys = [key for key in required_keys if not client_config.get(key)]
+    if missing_keys:
+        raise ValueError(f"credentials.json is missing required fields: {', '.join(missing_keys)}")
+
+    if 'web' in payload:
+        redirect_uris = client_config.get('redirect_uris') or []
+        expected_redirect_uri = f"http://localhost:{OAUTH_LOCAL_SERVER_PORT}/"
+        if expected_redirect_uri not in redirect_uris:
+            raise ValueError(
+                "This credentials.json is a Web OAuth client, but its redirect_uris do not include "
+                f"'{expected_redirect_uri}'. Add it in Google Cloud Console or use a Desktop app OAuth client instead."
+            )
 
 
 # ================= Retry Helper =================
@@ -164,21 +201,23 @@ def process_records(config, script_dir):
     today_str = datetime.today().strftime('%d %B %Y')
     attachment_field = config.get("attachment_field_name", "Offer")
     field_mapping = config.get("field_mapping", DEFAULT_FIELD_MAPPING)
+    applicant_name_field = field_mapping.get("{{Applicant Name}}", "Applicant Name")
 
     # --- Collect record IDs that need processing ---
     new_record_ids = []
     for record in records:
         fields = record.get('fields', {})
-        applicant_name = fields.get('Applicant Name')
-        if not applicant_name:
-            continue
         existing_attachment = fields.get(attachment_field)
         if existing_attachment:
             stats["skipped"] += 1
         else:
             new_record_ids.append(record['id'])
 
-    logger.info(f"Analysis: {len(new_record_ids)} new records to process, {stats['skipped']} already have attachments")
+    logger.info(
+        "Analysis: %s pending without attachment, %s already have attachments",
+        len(new_record_ids),
+        stats["skipped"],
+    )
 
     if not new_record_ids:
         logger.info("No new records found. Nothing to process this run.")
@@ -195,7 +234,18 @@ def process_records(config, script_dir):
             continue
 
         fields = fresh_record.get('fields', {})
-        applicant_name = fields.get('Applicant Name', 'Unknown')
+        applicant_name = fields.get(applicant_name_field)
+        if applicant_name:
+            applicant_name = str(applicant_name).strip()
+        if not applicant_name:
+            applicant_name = f"Record {record_id}"
+            logger.warning(
+                "[%s/%s] Applicant name field '%s' is empty. Using fallback title '%s'.",
+                i + 1,
+                len(new_record_ids),
+                applicant_name_field,
+                applicant_name,
+            )
 
         # Double-check: skip if attachment was added since our initial scan
         if fields.get(attachment_field):
@@ -323,5 +373,10 @@ def process_records(config, script_dir):
 
         time.sleep(1)
 
-    logger.info(f"Run complete! Processed: {stats['processed']}, Skipped: {stats['skipped']}, Errors: {stats['errors']}")
+    logger.info(
+        "Run complete! Processed: %s, Skipped: %s, Errors: %s",
+        stats["processed"],
+        stats["skipped"],
+        stats["errors"],
+    )
     return stats

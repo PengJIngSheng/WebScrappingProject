@@ -94,6 +94,7 @@
                                 <input type="password" id="airtable_api_token" placeholder="pat...">
                                 <span class="input-icon">🔑</span>
                             </div>
+                            <div class="field-hint" id="tokenHint">Leave blank to keep the saved token on the server.</div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -143,6 +144,30 @@
                     </div>
                 </section>
 
+                <!-- Field Mapping -->
+                <section class="card" data-tilt>
+                    <div class="card-glow"></div>
+                    <div class="card-header">
+                        <div class="card-icon card-icon-cyan">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M8 6h13" />
+                                <path d="M8 12h13" />
+                                <path d="M8 18h13" />
+                                <path d="M3 6h.01" />
+                                <path d="M3 12h.01" />
+                                <path d="M3 18h.01" />
+                            </svg>
+                        </div>
+                        <h2>Field Mapping</h2>
+                    </div>
+                    <p class="section-copy">Map Google Docs placeholders on the left to Airtable field names on the right.</p>
+                    <div class="mapping-list" id="mappingList"></div>
+                    <button class="btn btn-small btn-ghost" id="addMappingBtn" type="button">
+                        Add Mapping
+                    </button>
+                </section>
+
                 <!-- Credentials -->
                 <section class="card" data-tilt>
                     <div class="card-glow"></div>
@@ -171,7 +196,7 @@
                                 </svg>
                             </div>
                             <p>Drag & drop <strong>credentials.json</strong></p>
-                            <span class="upload-hint">or click to browse · Expires after 3 days</span>
+                            <span class="upload-hint">or click to browse · Upload a Desktop app OAuth JSON</span>
                         </div>
                     </div>
                 </section>
@@ -322,241 +347,7 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <script>
-        // ================= API Helpers =================
-
-        async function api(url, method = 'GET', body = null) {
-            const opts = { method, headers: {} };
-            if (body && !(body instanceof FormData)) {
-                opts.headers['Content-Type'] = 'application/json';
-                opts.body = JSON.stringify(body);
-            } else if (body) {
-                opts.body = body;
-            }
-            const res = await fetch(url, opts);
-            return res.json();
-        }
-
-        function showToast(msg, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.className = `toast toast-${type} toast-show`;
-            setTimeout(() => toast.className = 'toast', 3500);
-        }
-
-        // ================= Config =================
-
-        async function loadConfig() {
-            const data = await api('/api/config');
-            const fields = ['base_id', 'table_name', 'view_name', 'attachment_field_name',
-                'template_doc_id', 'target_folder_id'];
-            fields.forEach(f => {
-                const el = document.getElementById(f);
-                if (el && data[f]) el.value = data[f];
-            });
-            if (data.airtable_api_token) {
-                document.getElementById('airtable_api_token').value = data.airtable_api_token;
-            }
-            if (data.interval_minutes) {
-                document.getElementById('interval_minutes').value = data.interval_minutes;
-            }
-        }
-
-        async function saveConfig() {
-            const fields = ['airtable_api_token', 'base_id', 'table_name', 'view_name',
-                'attachment_field_name', 'template_doc_id', 'target_folder_id', 'interval_minutes'];
-            const body = {};
-            fields.forEach(f => {
-                const el = document.getElementById(f);
-                if (el) body[f] = el.value;
-            });
-
-            const btn = document.getElementById('saveBtn');
-            btn.classList.add('btn-loading');
-            const res = await api('/api/config', 'POST', body);
-            btn.classList.remove('btn-loading');
-
-            if (res.success) {
-                showToast('✓ Configuration saved successfully');
-            } else {
-                showToast(res.error || 'Save failed', 'error');
-            }
-        }
-
-        // ================= Credentials =================
-
-        function setupUploadZone() {
-            const zone = document.getElementById('uploadZone');
-            const input = document.getElementById('credentialsFile');
-
-            zone.addEventListener('click', () => input.click());
-            zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
-            zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-            zone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                zone.classList.remove('drag-over');
-                if (e.dataTransfer.files.length) uploadFile(e.dataTransfer.files[0]);
-            });
-            input.addEventListener('change', () => { if (input.files.length) uploadFile(input.files[0]); });
-        }
-
-        async function uploadFile(file) {
-            const fd = new FormData();
-            fd.append('file', file);
-            const res = await fetch('/api/upload-credentials', { method: 'POST', body: fd });
-            const data = await res.json();
-            if (data.success) {
-                showToast('✓ credentials.json uploaded · OAuth reset');
-                updateCredentialsInfo(data.info);
-            } else {
-                showToast(data.error || 'Upload failed', 'error');
-            }
-        }
-
-        function updateCredentialsInfo(info) {
-            const el = document.getElementById('credentialsInfo');
-            if (info && info.exists) {
-                el.innerHTML = `
-                    <div class="cred-badge cred-ok">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                        Active
-                    </div>
-                    <span class="cred-detail">Expires in ${info.expires_in} · Uploaded ${info.uploaded_at}</span>`;
-            } else {
-                el.innerHTML = `
-                    <div class="cred-badge cred-missing">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                        Not uploaded
-                    </div>`;
-            }
-        }
-
-        // ================= Controls =================
-
-        async function startScheduler() {
-            const res = await api('/api/start', 'POST');
-            if (res.success) { showToast('▶ 自动检查已开启，将持续监控 Airtable 新数据'); updateUI(true); }
-            else showToast(res.error, 'error');
-        }
-
-        async function stopScheduler() {
-            const res = await api('/api/stop', 'POST');
-            if (res.success) { showToast('⏹ 自动检查已停止'); updateUI(false); }
-            else showToast(res.error, 'error');
-        }
-
-        async function runNow() {
-            const res = await api('/api/run-now', 'POST');
-            if (res.success) showToast('⚡ 手动检查开始执行...');
-            else showToast(res.error, 'error');
-        }
-
-        function updateUI(running) {
-            const badge = document.getElementById('statusBadge');
-            const statusText = document.getElementById('statusText');
-            const startBtn = document.getElementById('startBtn');
-            const stopBtn = document.getElementById('stopBtn');
-
-            if (running) {
-                statusText.textContent = 'Running';
-                badge.className = 'status-badge status-running';
-                startBtn.disabled = true;
-                stopBtn.disabled = false;
-            } else {
-                statusText.textContent = 'Stopped';
-                badge.className = 'status-badge status-stopped';
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
-            }
-        }
-
-        // ================= Status =================
-
-        async function refreshStatus() {
-            try {
-                const data = await api('/api/status');
-                updateUI(data.scheduler_running);
-                updateCredentialsInfo(data.credentials);
-                document.getElementById('statLastRun').textContent = data.last_run || '—';
-                if (data.last_stats) {
-                    animateNumber('statProcessed', data.last_stats.processed || 0);
-                    animateNumber('statSkipped', data.last_stats.skipped || 0);
-                    animateNumber('statErrors', data.last_stats.errors || 0);
-                }
-            } catch (e) { }
-        }
-
-        function animateNumber(id, target) {
-            const el = document.getElementById(id);
-            const current = parseInt(el.textContent) || 0;
-            if (current === target) return;
-            el.textContent = target;
-            el.classList.add('stat-pop');
-            setTimeout(() => el.classList.remove('stat-pop'), 400);
-        }
-
-        // ================= Logs =================
-
-        async function refreshLogs() {
-            try {
-                const data = await api('/api/logs?lines=100');
-                const container = document.getElementById('logsContent');
-                if (data.logs && data.logs.length) {
-                    container.innerHTML = data.logs.map(line => {
-                        if (line.includes('[ERROR]')) return `<span class="log-error">${escapeHtml(line)}</span>`;
-                        if (line.includes('[WARNING]')) return `<span class="log-warn">${escapeHtml(line)}</span>`;
-                        if (line.includes('✅') || line.includes('complete')) return `<span class="log-success">${escapeHtml(line)}</span>`;
-                        return escapeHtml(line);
-                    }).join('\n');
-                } else {
-                    container.textContent = 'Awaiting logs...';
-                }
-                const logsDiv = document.getElementById('logsContainer');
-                logsDiv.scrollTop = logsDiv.scrollHeight;
-            } catch (e) { }
-        }
-
-        function escapeHtml(s) {
-            const d = document.createElement('div');
-            d.textContent = s;
-            return d.innerHTML;
-        }
-
-        // ================= 3D Tilt =================
-
-        function initTilt() {
-            document.querySelectorAll('[data-tilt]').forEach(card => {
-                card.addEventListener('mousemove', (e) => {
-                    const rect = card.getBoundingClientRect();
-                    const x = (e.clientX - rect.left) / rect.width - 0.5;
-                    const y = (e.clientY - rect.top) / rect.height - 0.5;
-                    card.style.transform = `perspective(800px) rotateY(${x * 4}deg) rotateX(${-y * 4}deg) translateY(-4px)`;
-                    // Move glow
-                    const glow = card.querySelector('.card-glow');
-                    if (glow) {
-                        glow.style.background = `radial-gradient(circle at ${(x + 0.5) * 100}% ${(y + 0.5) * 100}%, rgba(99, 102, 241, 0.08), transparent 60%)`;
-                    }
-                });
-                card.addEventListener('mouseleave', () => {
-                    card.style.transform = '';
-                    const glow = card.querySelector('.card-glow');
-                    if (glow) glow.style.background = '';
-                });
-            });
-        }
-
-        // ================= Init =================
-
-        window.addEventListener('DOMContentLoaded', () => {
-            loadConfig();
-            setupUploadZone();
-            refreshStatus();
-            refreshLogs();
-            initTilt();
-            setInterval(refreshStatus, 5000);
-            setInterval(refreshLogs, 5000);
-        });
-    </script>
+    <script src="/static/app.js"></script>
 </body>
 
 </html>
